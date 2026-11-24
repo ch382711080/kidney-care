@@ -1,0 +1,102 @@
+:root {
+  --van-primary-color: #1677ff;
+  --van-success-color: #12b76a;
+  --van-danger-color: #f04438;
+  --van-warning-color: #f79009;
+
+  --van-text-color: #1f2329;
+  --van-text-color-2: #646a73;
+  --van-text-color-3: #8f959e;
+  --van-background: #f5f7fa;
+  --van-background-2: #ffffff;
+  --van-background-3: #ffffff;
+  --van-border-color: #e5e6eb;
+  --van-active-color: #f2f3f5;
+
+  --van-font-size-sm: 12px;
+  --van-font-size-md: 14px;
+  --van-font-size-lg: 16px;
+  --van-radius-sm: 8px;
+  --van-radius-md: 12px;
+  --van-radius-lg: 16px;
+
+  --van-tabbar-height: 56px;
+  --van-tabbar-background: #ffffff;
+  --van-tabbar-item-text-color: #8f959e;
+  --van-tabbar-item-active-color: #1677ff;
+  --van-tabbar-item-active-background: transparent;
+
+  --van-button-primary-background: #1677ff;
+  --van-button-primary-border-color: #1677ff;
+  --van-button-border-radius: 12px;
+  --van-button-normal-font-size: 15px;
+
+  --van-cell-font-size: 15px;
+  --van-cell-line-height: 24px;
+  --van-cell-group-inset-radius: 16px;
+  --van-cell-group-background: #ffffff;
+  --van-cell-background: #ffffff;
+  --van-cell-border-color: #eef1f5;
+
+  --van-field-label-color: #1f2329;
+  --van-field-input-text-color: #1f2329;
+  --van-field-placeholder-text-color: #a8adb5;
+
+  --van-dialog-radius: 18px;
+  --van-toast-radius: 12px;
+
+  --van-base-font: var(--kc-font-sans);
+}
+
+.van-tabbar {
+  border-top: 1px solid var(--kc-color-border-soft);
+  box-shadow: 0 -6px 24px rgba(16, 24, 40, 0.04);
+}
+
+.van-tabbar-item {
+  font-size: 11px;
+}
+
+.van-tabbar-item__icon {
+  font-size: 21px;
+  margin-bottom: 3px;
+}
+
+.van-button {
+  font-weight: 500;
+}
+
+.van-button--primary {
+  background: linear-gradient(135deg, #2b8bff 0%, #1677ff 100%);
+  border: 0;
+  box-shadow: 0 6px 16px rgba(22, 119, 255, 0.22);
+}
+
+.van-cell {
+  align-items: center;
+}
+
+.van-cell__title {
+  font-weight: 500;
+}
+
+.van-cell__value {
+  color: var(--kc-color-text-secondary);
+}
+
+.van-field__label {
+  font-weight: 500;
+}
+
+.van-field__control {
+  font-size: 16px;
+}
+
+.van-dialog {
+  overflow: hidden;
+}
+
+.van-tag--primary {
+  background: var(--kc-color-primary-soft);
+  color: var(--kc-color-primary-dark);
+}
