@@ -21,7 +21,8 @@ import { APP_DESCRIPTION, APP_NAME, APP_SUBTITLE, APP_VERSION } from '@/constant
       <section class="about-card card">
         <h2>当前阶段</h2>
         <p>
-          第一阶段先完成页面骨架、移动端导航和基础设计系统。检查、用药、趋势、备份等功能会在后续阶段逐步接入。
+          数据层已接入本地数据库，检查记录的录入与编辑页面正在开发。备份功能尚未提供，
+          在备份上线前请勿录入真实健康数据。
         </p>
       </section>
 
@@ -31,7 +32,7 @@ import { APP_DESCRIPTION, APP_NAME, APP_SUBTITLE, APP_VERSION } from '@/constant
           <li>数据优先保存在本机，不依赖账号和服务器；</li>
           <li>不收集不必要的身份信息，不接入第三方统计；</li>
           <li>不自动判断病情，不提供诊断或调药建议；</li>
-          <li>备份文件由你自行保管，可导出、可恢复、可迁移。</li>
+          <li>备份功能上线后，备份文件由你自行保管，可导出、可恢复、可迁移。</li>
         </ul>
       </section>
 

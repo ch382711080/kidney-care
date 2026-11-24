@@ -2,6 +2,8 @@
 
 本文是 IndexedDB / Dexie 的**实施前设计基线**。M2 实现数据层时，如需调整字段，先更新本文再改 schema。
 
+实施计划文件中的旧索引（如 `[profileId+drugName+startDate]`）已被本文取代；与本文冲突时，一律以本文为准。
+
 ## 约定
 
 - 主键：客户端生成 UUID 字符串，不使用自增数字。
@@ -67,7 +69,12 @@ backupMeta (1) / settings (1) / snapshots (N) / outbox (N)  — 本地辅助表
 | createdAt / updatedAt | ISO string | 是 | 时间戳 |
 | deletedAt | ISO string? | 否 | 删除时间 |
 
-索引：`[profileId+isDeleted+examDate]`、`[profileId+isDeleted]`、`updatedAt`、`clientRequestId`。
+索引：`id`、`profileId`、`[profileId+isDeleted+examDate]`、`[profileId+isDeleted]`、`[profileId+clientRequestId]`、`updatedAt`。
+
+规则：
+
+- 一次检查至少要有一个有效指标（`examItems` 非空）才能保存，不允许空检查。
+- `categoryCodes` 由保存时的指标类别去重生成，不能由页面随意传入。
 
 ## 表：examItems
 
@@ -83,7 +90,8 @@ backupMeta (1) / settings (1) / snapshots (N) / outbox (N)  — 本地辅助表
 | itemCode | string | 是 | 内置指标 code 或 `custom:*` |
 | itemName | string | 是 | 指标名称快照 |
 | valueText | string | 是 | 化验单原文，如 `<0.15`、`1+`、`阴性` |
-| valueNumber | number? | 否 | 仅当文本可解析为数值时填写 |
+| valueNumber | number? | 否 | 仅当文本可解析为数值时填写；不等式时填边界数值（如 `<0.15` 填 0.15） |
+| valueOperator | `'lt' \| 'lte' \| 'gt' \| 'gte'`? | 否 | 不等式方向；缺失表示等号值。全角 `<`、`≤`、`>`、`≥` 保存前统一转换为半角语义 |
 | unit | string | 是 | 单位；定性/文本指标为空字符串 |
 | refLow | number? | 否 | 本次化验单参考下限 |
 | refHigh | number? | 否 | 本次化验单参考上限 |
@@ -92,13 +100,15 @@ backupMeta (1) / settings (1) / snapshots (N) / outbox (N)  — 本地辅助表
 | isDeleted | 0 \| 1 | 是 | 随检查级联软删除 |
 | createdAt / updatedAt | ISO string | 是 | 时间戳 |
 
-索引：`[profileId+itemCode+isDeleted+examDate]`、`[profileId+examId]`、`examId`。
+索引：`id`、`profileId`、`examId`、`[profileId+itemCode+isDeleted+examDate]`、`[profileId+examId]`、`updatedAt`。
 
 规则：
 
 - 不自动补零、不插值、不跨单位换算。
 - 定性指标不参与数值折线图。
 - 参考范围按每次检查保存，不设全院/全局固定范围。
+- 不等式值（`<0.15`、`>3.5` 等）：`valueText` 保留原文，`valueNumber` 存边界值，`valueOperator` 标方向；趋势可绘制边界值，但列表与 tooltip 必须显示原文，且该点 `flag` 记为 `unknown`。
+- 数值解析只接受“可选操作符 + 数字”的完整文本；`1+`、`阴性` 等只保留文本，不写 `valueNumber`。
 
 ## 表：examRevisions
 
@@ -114,7 +124,7 @@ backupMeta (1) / settings (1) / snapshots (N) / outbox (N)  — 本地辅助表
 | reason | `'edit' \| 'before-delete'` | 是 | 原因 |
 | createdAt | ISO string | 是 | 时间 |
 
-索引：`examId`、`createdAt`。每个检查最多保留最近 20 份，超出按时间清理。
+索引：`id`、`profileId`、`examId`、`createdAt`。每个检查最多保留最近 20 份，超出按时间清理。
 
 ## 表：medications
 
@@ -144,7 +154,7 @@ backupMeta (1) / settings (1) / snapshots (N) / outbox (N)  — 本地辅助表
 | isDeleted | 0 \| 1 | 是 | 软删除（仅用于纠错） |
 | createdAt / updatedAt | ISO string | 是 | 时间戳 |
 
-索引：`[profileId+groupId+startDate]`、`[profileId+startDate]`、`[profileId+status]`。
+索引：`id`、`profileId`、`[profileId+groupId+startDate]`、`[profileId+startDate]`、`[profileId+status]`、`updatedAt`。
 
 规则：
 
@@ -174,9 +184,13 @@ backupMeta (1) / settings (1) / snapshots (N) / outbox (N)  — 本地辅助表
 | isDeleted | 0 \| 1 | 是 | 软删除 |
 | createdAt / updatedAt | ISO string | 是 | 时间戳 |
 
-索引：`[profileId+recordDate]`、`[profileId+isDeleted+recordDate]`、`updatedAt`。
+索引：`id`、`profileId`、`[profileId+isDeleted+recordDate]`、`updatedAt`。
 
-校验：收缩压 > 舒张压；体重、心率非负；明显异常值只做“请确认是否录入正确”提示，不阻断。
+校验：
+
+- 至少填写一项测量值（收缩压与舒张压必须成对填写）。
+- 收缩压 > 舒张压；体重、心率非负。
+- 明显异常值只做“请确认是否录入正确”提示，不阻断。
 
 ## 表：followUps
 
@@ -197,7 +211,7 @@ backupMeta (1) / settings (1) / snapshots (N) / outbox (N)  — 本地辅助表
 | isDeleted | 0 \| 1 | 是 | 软删除 |
 | createdAt / updatedAt | ISO string | 是 | 时间戳 |
 
-索引：`[profileId+isDeleted+plannedDate]`、`[profileId+status]`。
+索引：`id`、`profileId`、`[profileId+isDeleted+plannedDate]`、`[profileId+status]`、`updatedAt`。
 
 逾期 = `plannedDate < 今天 && status === 'planned'`，不写定时任务；仅页面内提醒。
 
@@ -218,7 +232,9 @@ backupMeta (1) / settings (1) / snapshots (N) / outbox (N)  — 本地辅助表
 | isDeleted | 0 \| 1 | 是 | 软删除 |
 | createdAt / updatedAt | ISO string | 是 | 时间戳 |
 
-索引：`[profileId+biopsyDate]`。不做评分推断；页面提示“以原报告为准”。
+索引：`profileId`、`[profileId+isDeleted]`、`updatedAt`。列表按 `biopsyDate` 在内存排序。
+
+说明：`biopsyDate` 可空，不能作为复合索引分量——IndexedDB 中任一分量为 `undefined` 的记录不会进入该索引，导致未填日期的穿刺记录查不到。不做评分推断；页面提示“以原报告为准”。
 
 ## 辅助表
 
@@ -238,12 +254,13 @@ backupMeta (1) / settings (1) / snapshots (N) / outbox (N)  — 本地辅助表
 | 字段 | 说明 |
 |---|---|
 | id | 固定 `local` |
-| privacyMode | 首页/列表数值打码 |
 | backupReminderDays | 默认 7 |
 | onboardingAcceptedAt | 首次使用说明确认时间 |
 | demoMode | 是否处于演示模式（如采用独立库，可省略） |
 | activeProfileId | 当前档案（本地为 `local`） |
 | appVersion | 版本号 |
+
+说明：隐私模式属于非敏感 UI 偏好，只存放在 localStorage（`kc_privacy_mode`），不写入本表、不随备份导出，避免出现两份状态。
 
 ### snapshots
 
@@ -267,19 +284,28 @@ backupMeta (1) / settings (1) / snapshots (N) / outbox (N)  — 本地辅助表
 ```ts
 db.version(1).stores({
   profiles: 'id, updatedAt',
-  exams: 'id, [profileId+isDeleted+examDate], [profileId+isDeleted], updatedAt, clientRequestId',
-  examItems: 'id, examId, [profileId+itemCode+isDeleted+examDate], [profileId+examId]',
-  examRevisions: 'id, examId, createdAt',
-  medications: 'id, [profileId+groupId+startDate], [profileId+startDate], [profileId+status], updatedAt',
-  dailyRecords: 'id, [profileId+recordDate], [profileId+isDeleted+recordDate], updatedAt',
-  followUps: 'id, [profileId+isDeleted+plannedDate], [profileId+status], updatedAt',
-  biopsies: 'id, [profileId+biopsyDate], updatedAt',
+  exams: 'id, profileId, [profileId+isDeleted+examDate], [profileId+isDeleted], [profileId+clientRequestId], updatedAt',
+  examItems: 'id, profileId, examId, [profileId+itemCode+isDeleted+examDate], [profileId+examId], updatedAt',
+  examRevisions: 'id, profileId, examId, createdAt',
+  medications: 'id, profileId, [profileId+groupId+startDate], [profileId+startDate], [profileId+status], updatedAt',
+  dailyRecords: 'id, profileId, [profileId+isDeleted+recordDate], updatedAt',
+  followUps: 'id, profileId, [profileId+isDeleted+plannedDate], [profileId+status], updatedAt',
+  biopsies: 'id, profileId, [profileId+isDeleted], updatedAt',
   backupMeta: 'id',
   settings: 'id',
   snapshots: 'id, createdAt',
   outbox: 'id, [syncedAt+updatedAt]',
 })
 ```
+
+所有业务表统一保留 `profileId` 单列索引，便于 M4 备份按档案整表导出，也避免依赖复合索引前缀扫描。
+
+## 写入规则
+
+- 一次检查的 `exams` 与 `examItems` 必须在同一事务内写入；编辑时先把旧数据快照写入 `examRevisions`。
+- 软删除检查时级联标记其 `examItems.isDeleted=1`；恢复时一并恢复；回收站默认保留 30 天。
+- 每次写库成功后尝试一次 `navigator.storage.persist()`（能力检测后），不阻塞保存、不承诺结果。
+- 写入失败要整体回滚，向页面返回稳定错误码，不把健康数值写入 console。
 
 ## 迁移策略
 

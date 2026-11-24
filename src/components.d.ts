@@ -14,6 +14,7 @@ declare module 'vue' {
     AppShell: typeof import('./components/layout/AppShell.vue')['default']
     BrandMark: typeof import('./components/common/BrandMark.vue')['default']
     ChartPlaceholder: typeof import('./components/charts/ChartPlaceholder.vue')['default']
+    DatabaseUnavailable: typeof import('./components/common/DatabaseUnavailable.vue')['default']
     Disclaimer: typeof import('./components/common/Disclaimer.vue')['default']
     EmptyState: typeof import('./components/common/EmptyState.vue')['default']
     ErrorState: typeof import('./components/common/ErrorState.vue')['default']
@@ -27,6 +28,7 @@ declare module 'vue' {
     TabBar: typeof import('./components/layout/TabBar.vue')['default']
     VanButton: typeof import('vant/es')['Button']
     VanIcon: typeof import('vant/es')['Icon']
+    VanLoading: typeof import('vant/es')['Loading']
     VanTabbar: typeof import('vant/es')['Tabbar']
     VanTabbarItem: typeof import('vant/es')['TabbarItem']
   }

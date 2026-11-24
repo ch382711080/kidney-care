@@ -200,7 +200,7 @@ const metrics = [
         </span>
         <span class="notice-card__text">
           <strong>数据只保存在当前浏览器</strong>
-          <small>微信清理缓存或更换设备可能导致数据丢失，请定期备份。</small>
+          <small>当前版本尚未提供备份功能，请勿录入真实健康数据。备份将在第四阶段接入。</small>
         </span>
         <van-icon name="arrow" class="notice-card__arrow" />
       </RouterLink>

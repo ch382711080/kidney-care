@@ -29,10 +29,29 @@ function productionCsp() {
   }
 }
 
+/**
+ * Vant 的图标 @font-face 内置了 woff2 data URI，同时附带阿里 CDN 的 woff 兜底。
+ * 本应用承诺无第三方请求，构建时去掉这个外部兜底地址，只保留本地内联字体。
+ */
+function stripExternalVantFont() {
+  return {
+    name: 'kidney-care-strip-external-font',
+    enforce: 'pre' as const,
+    transform(code: string) {
+      if (!code.includes('at.alicdn.com')) return null
+      return code.replace(
+        /,\s*url\(\s*['"]?(?:https?:)?\/\/at\.alicdn\.com[^)]*['"]?\s*\)(?:\s*format\([^)]*\))?/g,
+        '',
+      )
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   base: './',
   plugins: [
+    stripExternalVantFont(),
     vue(),
     Components({
       resolvers: [VantResolver()],

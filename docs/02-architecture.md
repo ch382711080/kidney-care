@@ -30,15 +30,15 @@ Vue 3 + TypeScript + Vite + Vant 4
 | UI | Vant 4 | 移动端表单、弹窗、日期选择；按需自动引入 |
 | 路由 | Vue Router 5，hash 模式 | 微信/静态托管刷新不 404 |
 | 状态 | Pinia | 只放跨页 UI 状态，后续不长期缓存全量健康数据 |
-| 存储 | IndexedDB + Dexie（后续） | 结构化、支持索引/事务/版本迁移 |
-| 校验 | Zod（后续） | 表单与备份文件校验 |
+| 存储 | IndexedDB + Dexie（已接入） | 结构化、支持索引/事务/版本迁移 |
+| 校验 | Zod（后续） | 备份文件校验；表单校验由领域服务承担 |
 | 图表 | ECharts（后续） | 按需引入，窄屏适配 |
 | 日期 | dayjs | 本地打包 |
 | 测试 | Vitest + fake-indexeddb | 数据层与领域服务单测 |
 
 ## 前端分层
 
-当前 M1 已建立页面与组件层。后续按以下依赖方向扩展：
+当前 M1 已建立页面与组件层，M2-a 已接入本地数据层。后续按以下依赖方向扩展：
 
 ```text
 views / components
@@ -67,12 +67,14 @@ src/
 │   ├── layout/       # AppShell、TabBar、SideNav、PageHeader
 │   ├── common/       # EmptyState、LoadingState、ErrorState、Disclaimer、MetricCard 等
 │   └── charts/       # 趋势图占位（后续替换为 ECharts）
-├── constants/        # 应用常量、指标字典
+├── constants/        # 应用常量、指标字典、数据常量
+├── data/             # Dexie schema、Repository 接口、本地适配器、启动检测
+├── domain/           # 模型、化验值解析、检查草稿校验、领域服务、Clock
 ├── router/           # 路由表
-├── stores/           # app store（隐私模式等）
+├── stores/           # app store（隐私模式）、data store（数据库状态）
 ├── styles/           # tokens、base、Vant 主题
 ├── types/            # RouteMeta 等类型扩展
-├── utils/            # 平台检测
+├── utils/            # 平台、日期、ID、存储申请
 └── views/            # 首页、检查、趋势、档案、设置、未开放页
 ```
 
@@ -110,6 +112,7 @@ src/
 - 卡片圆角 15–16px，轻阴影；不使用复杂动画。
 - 字体使用系统字体栈，不加载外部字体。
 - 无外部 CDN、统计 SDK、第三方请求。
+- Vant 图标字体只使用包内内联的 woff2；其自带的阿里 CDN 兜底地址在构建时由 Vite 插件移除。
 - 生产构建由 Vite 插件注入 CSP：默认只允许同源脚本/连接；字体允许 `data:`（Vant 图标字体），样式允许内联。
 
 ## 未来云端升级
